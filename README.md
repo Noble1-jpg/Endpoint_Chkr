@@ -4,8 +4,8 @@ This tool checks the availability of a list of HTTP endpoints provided in a YAML
 
 ## Table of Contents
 
-- [What It Does](#what-it-does)
-- [Installation](#installation)
+- [What does it do?](#what-does-it-do)
+- [Installation Steps](#installation-steps)
 - [Running the Program](#running-the-program)
 - [Configuration File Format](#configuration-file-format)
 - [Identified Issues and Fixes](#identified-issues-and-fixes)
@@ -51,10 +51,10 @@ To run the checker, use:
 You will see output like:
 
 ```
-example.com has 100% availability
+Nabilah.com has 100% availability
 ```
 
-This output appears every 15 seconds.
+This output will appear every 15 seconds.
 
 ## Configuration File Format
 
@@ -74,45 +74,15 @@ The configuration file should be in YAML format. Example:
 
 ## Identified Issues and Fixes
 
-### Request body handling
-- **Issue:** Sent full struct as JSON
-- **Original Behavior:** Entire endpoint struct was marshaled and sent in request body
-- **Fix Implemented:** Now only the `body` field is used for request payload
+- Request body was wrong: It sent the whole endpoint struct as JSON. Now it just sends the actual body field.
+- No timeout on requests: If a server was slow, the program could freeze. Now it gives up after 500 milliseconds.
+- Didn’t check response time: Only status code was checked. Now it checks that and how fast the response was.
+- Crashes with missing map entries: It tried to update the stats map without setting it up first. Now it safely creates new entries.
+- Included port in domain name: It treated "example.com:443" and "example.com" as different. Now it only uses the hostname.
+- Ran endpoints one after another: This was too slow. Now it runs them all at the same time using goroutines.
+- Shared data could cause bugs: Multiple goroutines could access shared stats at the same time. A mutex now keeps this safe.
+- Availability was a decimal: It showed numbers like 98.3%. Now it rounds down to whole numbers like 98%.
 
-### No timeout
-- **Issue:** Could hang on slow endpoints
-- **Original Behavior:** HTTP requests had no time limit
-- **Fix Implemented:** Timeout of 500ms added to the HTTP client
-
-### Incomplete availability check
-- **Issue:** Only status code was checked
-- **Original Behavior:** Ignored response time in availability logic
-- **Fix Implemented:** Now also checks response duration to ensure it's within 500ms
-
-### Crashes from nil map entries
-- **Issue:** Map entries accessed without initialization
-- **Original Behavior:** Could panic if domain key didn't exist
-- **Fix Implemented:** Map values are initialized safely using nil checks
-
-### Domain detection
-- **Issue:** Included ports in domain name
-- **Original Behavior:** Used full host (including port)
-- **Fix Implemented:** Now extracts only hostname, ignoring port
-
-### Sequential execution
-- **Issue:** Slow with many endpoints
-- **Original Behavior:** Endpoints checked one after another
-- **Fix Implemented:** Uses goroutines and WaitGroup for concurrent execution
-
-### Unsafe shared state
-- **Issue:** Risk of data races on stats map
-- **Original Behavior:** Map was updated from multiple goroutines without protection
-- **Fix Implemented:** Mutex added to guard map access
-
-### Decimal percentages
-- **Issue:** Showed float availability values
-- **Original Behavior:** Percentages were printed with decimals
-- **Fix Implemented:** Availability now rounded down to whole numbers
 
 ## What I Learned and Enjoyed
 
@@ -136,6 +106,5 @@ MIT License
 ## Author
 
 Nabilah Aralepo - (https://github.com/Noble1-jpg)
-
 
 
